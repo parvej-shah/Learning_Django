@@ -1,12 +1,14 @@
 from django.urls import reverse_lazy, reverse
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.admin.views.decorators import staff_member_required
 import datetime
 from catalog.forms import RenewBookForm
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
+from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin, UserPassesTestMixin
 from catalog.models import Author, Book, BookInstance, Genre
 from django.views.generic import CreateView, UpdateView, DeleteView, ListView, DetailView
+from django.contrib.auth.models import Group
 # Create your views here.
 
 
@@ -113,19 +115,21 @@ def renew_book_librarian(request, pk):
     return render(request, 'catalog/book_renew_librarian.html', context)
 
 
-class AuthorCreate(LoginRequiredMixin,PermissionRequiredMixin, CreateView):
-    permission_required = 'catalog.can_mark_returned'
+class AuthorCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = 'catalog.can_add_author'
     model = Author
     fields = ['first_name', 'last_name', 'date_of_birth', 'date_of_death']
     initial = {'date_of_death': '11/06/2020'}
 
 
-class AuthorUpdate(UpdateView):
+class AuthorUpdate(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = 'catalog.can_update_author'
     model = Author
     # Not recommended (potential security issue if more fields added)
     fields = '__all__'
 
 
-class AuthorDelete(DeleteView):
+class AuthorDelete(LoginRequiredMixin, PermissionRequiredMixin,DeleteView):
+    permission_required = 'catalog.can_delete_author'
     model = Author
     success_url = reverse_lazy('authors')
